@@ -12,7 +12,7 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             padding: 15px;
             margin: 0;
-            padding-bottom: 80px; /* Отступ снизу, чтобы кнопка и текст не сливались */
+            padding-bottom: 80px; 
         }
         .block {
             margin-bottom: 20px;
@@ -44,25 +44,19 @@
         }
         .row {
             display: flex;
-            align-items: center;
-            margin-bottom: 5px;
+            align-items: flex-start; /* Выравниваем цифру по верхнему краю */
+            margin-bottom: 8px;
         }
         .row span {
             width: 20px;
             font-weight: bold;
             color: var(--tg-theme-hint-color, #888);
+            margin-top: 10px; /* Отступ, чтобы цифра была на уровне первой строки текста */
         }
-        .row input {
+        .row textarea {
+            flex-grow: 1;
             margin-bottom: 0;
-        }
-        /* Стиль для красного предупреждения */
-        #char_warning {
-            color: #ff3b30;
-            font-weight: bold;
-            text-align: center;
-            margin-top: 10px;
-            font-size: 14px;
-            display: none; /* Скрыто по умолчанию */
+            min-height: 40px; /* Базовая высота для строк списка, можно потянуть вниз */
         }
     </style>
 </head>
@@ -80,36 +74,36 @@
 
     <div class="block">
         <label>🗓 КАКИЕ ЗАДАЧИ БЕРУ НА НЕДЕЛЮ:</label>
-        <div class="row"><span>1.</span><input type="text" class="week_task"></div>
-        <div class="row"><span>2.</span><input type="text" class="week_task"></div>
-        <div class="row"><span>3.</span><input type="text" class="week_task"></div>
+        <div class="row"><span>1.</span><textarea class="week_task" rows="1"></textarea></div>
+        <div class="row"><span>2.</span><textarea class="week_task" rows="1"></textarea></div>
+        <div class="row"><span>3.</span><textarea class="week_task" rows="1"></textarea></div>
     </div>
 
     <div class="block">
         <label>📋 ЧТО СДЕЛАЮ ЗАВТРА:</label>
-        <div class="row"><span>1.</span><input type="text" class="tomorrow_task"></div>
-        <div class="row"><span>2.</span><input type="text" class="tomorrow_task"></div>
-        <div class="row"><span>3.</span><input type="text" class="tomorrow_task"></div>
-        <div class="row"><span>4.</span><input type="text" class="tomorrow_task"></div>
-        <div class="row"><span>5.</span><input type="text" class="tomorrow_task"></div>
+        <div class="row"><span>1.</span><textarea class="tomorrow_task" rows="1"></textarea></div>
+        <div class="row"><span>2.</span><textarea class="tomorrow_task" rows="1"></textarea></div>
+        <div class="row"><span>3.</span><textarea class="tomorrow_task" rows="1"></textarea></div>
+        <div class="row"><span>4.</span><textarea class="tomorrow_task" rows="1"></textarea></div>
+        <div class="row"><span>5.</span><textarea class="tomorrow_task" rows="1"></textarea></div>
     </div>
 
     <div class="block">
         <label>✔️ ЧТО СДЕЛАНО СЕГОДНЯ:</label>
-        <div class="row"><span>1.</span><input type="text" class="today_task"></div>
-        <div class="row"><span>2.</span><input type="text" class="today_task"></div>
-        <div class="row"><span>3.</span><input type="text" class="today_task"></div>
-        <div class="row"><span>4.</span><input type="text" class="today_task"></div>
-        <div class="row"><span>5.</span><input type="text" class="today_task"></div>
+        <div class="row"><span>1.</span><textarea class="today_task" rows="1"></textarea></div>
+        <div class="row"><span>2.</span><textarea class="today_task" rows="1"></textarea></div>
+        <div class="row"><span>3.</span><textarea class="today_task" rows="1"></textarea></div>
+        <div class="row"><span>4.</span><textarea class="today_task" rows="1"></textarea></div>
+        <div class="row"><span>5.</span><textarea class="today_task" rows="1"></textarea></div>
     </div>
 
     <div class="block">
         <label>🌟 ИНСАЙТЫ ДНЯ:</label>
-        <div class="row"><span>1.</span><input type="text" class="insight"></div>
-        <div class="row"><span>2.</span><input type="text" class="insight"></div>
-        <div class="row"><span>3.</span><input type="text" class="insight"></div>
-        <div class="row"><span>4.</span><input type="text" class="insight"></div>
-        <div class="row"><span>5.</span><input type="text" class="insight"></div>
+        <div class="row"><span>1.</span><textarea class="insight" rows="1"></textarea></div>
+        <div class="row"><span>2.</span><textarea class="insight" rows="1"></textarea></div>
+        <div class="row"><span>3.</span><textarea class="insight" rows="1"></textarea></div>
+        <div class="row"><span>4.</span><textarea class="insight" rows="1"></textarea></div>
+        <div class="row"><span>5.</span><textarea class="insight" rows="1"></textarea></div>
     </div>
 
     <div class="block">
@@ -117,14 +111,11 @@
         <textarea id="request" placeholder="Если есть запрос к кураторам, напишите его здесь..."></textarea>
     </div>
 
-    <div id="char_warning"></div>
-
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand(); 
 
         const MAX_CHARS = 3900;
-        const warningDiv = document.getElementById('char_warning');
         const GREEN_COLOR = '#2cab37';
         const GRAY_COLOR = '#888888';
 
@@ -133,7 +124,7 @@
         tg.MainButton.text = "ОТПРАВИТЬ ОТЧЕТ";
         tg.MainButton.show();
 
-        // Функция подсчета всех введенных символов
+        // Подсчет символов
         function calculateTotalChars() {
             let total = 0;
             document.querySelectorAll('input[type="text"], textarea').forEach(input => {
@@ -142,32 +133,27 @@
             return total;
         }
 
-        // Проверка лимита при каждом вводе
+        // Логика визуального изменения кнопки
         function checkLimits() {
             let currentLength = calculateTotalChars();
             
             if (currentLength > MAX_CHARS) {
                 let excess = currentLength - MAX_CHARS;
-                warningDiv.innerText = `Превышен лимит на ${excess} символов! Пожалуйста, сократите текст.`;
-                warningDiv.style.display = 'block';
-                
-                // Делаем кнопку серой и отключаем её
+                // Меняем цвет и текст, но физически НЕ отключаем кнопку, чтобы избежать бага
                 tg.MainButton.color = GRAY_COLOR;
-                tg.MainButton.disable();
+                tg.MainButton.text = `Превышен лимит на ${excess} символов!`;
             } else {
-                warningDiv.style.display = 'none';
-                
-                // Возвращаем зеленой и включаем
                 tg.MainButton.color = GREEN_COLOR;
-                tg.MainButton.enable();
+                tg.MainButton.text = "ОТПРАВИТЬ ОТЧЕТ";
             }
         }
 
-        // Вешаем слушатель событий на все поля ввода
+        // Проверка при каждом вводе
         document.querySelectorAll('input[type="text"], textarea').forEach(input => {
             input.addEventListener('input', checkLimits);
         });
 
+        // Сбор данных
         function getValuesByClass(className) {
             let inputs = document.querySelectorAll('.' + className);
             let values = [];
@@ -179,9 +165,13 @@
             return values;
         }
 
+        // Отправка данных
         tg.MainButton.onClick(function() {
-            // Двойная проверка на случай непредвиденных сбоев
-            if (calculateTotalChars() > MAX_CHARS) return;
+            // Если лимит превышен, создаем вибрацию (ошибку) и прерываем выполнение
+            if (calculateTotalChars() > MAX_CHARS) {
+                tg.HapticFeedback.notificationOccurred('error');
+                return; 
+            }
 
             let reportData = {
                 hashtag: document.getElementById('hashtag').value,
