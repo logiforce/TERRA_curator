@@ -127,14 +127,14 @@
         let tg = window.Telegram.WebApp;
         tg.expand(); 
 
-        const MAX_BYTES = 3700; // Безопасный лимит байтов для Telegram
-        let isValid = true; // Флаг, разрешающий отправку
+        // Строгий лимит с учетом шаблона бота в Telegram
+        const MAX_BYTES = 3700; 
+        let isValid = true; 
 
-        // Базовые цвета
+        // Настройки цветов
         const GREEN_COLOR = '#2cab37';
-        const GRAY_COLOR = '#e0e0e0';
-        const RED_TEXT = '#ff3b30';
-        const WHITE_TEXT = '#ffffff';
+        const RED_COLOR = '#e63946'; // Красный фон для ошибки
+        const WHITE_TEXT = '#ffffff'; // Белый текст
 
         tg.MainButton.setParams({
             text: "ОТПРАВИТЬ ОТЧЕТ",
@@ -143,7 +143,6 @@
             is_visible: true
         });
 
-        // Сбор данных со страницы
         function getReportData() {
             let data = {
                 hashtag: document.getElementById('hashtag').value,
@@ -166,26 +165,24 @@
             return values;
         }
 
-        // Проверка лимитов (теперь считаем реальный вес в байтах)
         function checkLimits() {
             let reportData = getReportData();
             let jsonString = JSON.stringify(reportData);
-            
-            // TextEncoder переводит строку в реальные байты UTF-8
             let byteSize = new TextEncoder().encode(jsonString).length;
             
             if (byteSize > MAX_BYTES) {
                 isValid = false;
-                // Примерно переводим лишние байты обратно в символы (делим на 2 для кириллицы)
                 let excessChars = Math.ceil((byteSize - MAX_BYTES) / 2);
                 
+                // Применяем красную кнопку с белым текстом
                 tg.MainButton.setParams({
                     text: `Превышен лимит на ${excessChars} символов!`,
-                    color: GRAY_COLOR, // Серый фон
-                    text_color: RED_TEXT // КРАСНЫЙ текст
+                    color: RED_COLOR,
+                    text_color: WHITE_TEXT 
                 });
             } else {
                 isValid = true;
+                // Возвращаем зеленую кнопку
                 tg.MainButton.setParams({
                     text: "ОТПРАВИТЬ ОТЧЕТ",
                     color: GREEN_COLOR,
@@ -194,20 +191,16 @@
             }
         }
 
-        // Вешаем слушатель на любой ввод
         document.querySelectorAll('input, textarea').forEach(input => {
             input.addEventListener('input', checkLimits);
         });
 
-        // Клик по главной кнопке
         tg.MainButton.onClick(function() {
-            // Если флаг запрещает отправку (лимит превышен) — блокируем и вибрируем
             if (!isValid) {
                 tg.HapticFeedback.notificationOccurred('error');
                 return;
             }
 
-            // Отправляем сформированный JSON
             let finalData = getReportData();
             tg.sendData(JSON.stringify(finalData));
         });
