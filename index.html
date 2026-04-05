@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Отчет</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            background-color: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            padding: 15px;
+            margin: 0;
+        }
+        .block {
+            margin-bottom: 20px;
+            background-color: var(--tg-theme-secondary-bg-color, #f4f4f5);
+            padding: 15px;
+            border-radius: 12px;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        input[type="text"], textarea {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 10px;
+            margin-bottom: 8px;
+            border: 1px solid var(--tg-theme-hint-color, #cccccc);
+            border-radius: 8px;
+            background-color: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+            font-size: 14px;
+            outline: none;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+        .row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        .row span {
+            width: 20px;
+            font-weight: bold;
+            color: var(--tg-theme-hint-color, #888);
+        }
+        .row input {
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="block">
+        <label>Ваш хэштег:</label>
+        <input type="text" id="hashtag" value="#">
+    </div>
+
+    <div class="block">
+        <label>🎯 Цель на весь период обучения:</label>
+        <textarea id="global_goal" placeholder="Опишите цель..."></textarea>
+    </div>
+
+    <div class="block">
+        <label>🗓 КАКИЕ ЗАДАЧИ БЕРУ НА НЕДЕЛЮ:</label>
+        <div class="row"><span>1.</span><input type="text" class="week_task"></div>
+        <div class="row"><span>2.</span><input type="text" class="week_task"></div>
+        <div class="row"><span>3.</span><input type="text" class="week_task"></div>
+    </div>
+
+    <div class="block">
+        <label>📋 ЧТО СДЕЛАЮ ЗАВТРА:</label>
+        <div class="row"><span>1.</span><input type="text" class="tomorrow_task"></div>
+        <div class="row"><span>2.</span><input type="text" class="tomorrow_task"></div>
+        <div class="row"><span>3.</span><input type="text" class="tomorrow_task"></div>
+        <div class="row"><span>4.</span><input type="text" class="tomorrow_task"></div>
+        <div class="row"><span>5.</span><input type="text" class="tomorrow_task"></div>
+    </div>
+
+    <div class="block">
+        <label>✔️ ЧТО СДЕЛАНО СЕГОДНЯ:</label>
+        <div class="row"><span>1.</span><input type="text" class="today_task"></div>
+        <div class="row"><span>2.</span><input type="text" class="today_task"></div>
+        <div class="row"><span>3.</span><input type="text" class="today_task"></div>
+        <div class="row"><span>4.</span><input type="text" class="today_task"></div>
+        <div class="row"><span>5.</span><input type="text" class="today_task"></div>
+    </div>
+
+    <div class="block">
+        <label>🌟 ИНСАЙТЫ ДНЯ:</label>
+        <div class="row"><span>1.</span><input type="text" class="insight"></div>
+        <div class="row"><span>2.</span><input type="text" class="insight"></div>
+        <div class="row"><span>3.</span><input type="text" class="insight"></div>
+        <div class="row"><span>4.</span><input type="text" class="insight"></div>
+        <div class="row"><span>5.</span><input type="text" class="insight"></div>
+    </div>
+
+    <div class="block">
+        <label>❓ ЗАПРОС:</label>
+        <textarea id="request" placeholder="Если есть запрос к кураторам, напишите его здесь..."></textarea>
+    </div>
+
+    <script>
+        // Инициализация Telegram Web App
+        let tg = window.Telegram.WebApp;
+        tg.expand(); // Открываем на всю высоту экрана
+
+        // Настраиваем главную кнопку снизу
+        tg.MainButton.textColor = '#ffffff';
+        tg.MainButton.color = '#2cab37'; // Зеленый цвет кнопки
+        tg.MainButton.text = "ОТПРАВИТЬ ОТЧЕТ";
+        tg.MainButton.show();
+
+        // Сбор данных из полей определенного класса
+        function getValuesByClass(className) {
+            let inputs = document.querySelectorAll('.' + className);
+            let values = [];
+            inputs.forEach(input => {
+                if(input.value.trim() !== '') {
+                    values.push(input.value.trim());
+                }
+            });
+            return values;
+        }
+
+        // Событие по клику на главную кнопку
+        tg.MainButton.onClick(function() {
+            let reportData = {
+                hashtag: document.getElementById('hashtag').value,
+                global_goal: document.getElementById('global_goal').value,
+                week_tasks: getValuesByClass('week_task'),
+                tomorrow_tasks: getValuesByClass('tomorrow_task'),
+                today_tasks: getValuesByClass('today_task'),
+                insights: getValuesByClass('insight'),
+                request: document.getElementById('request').value
+            };
+
+            // Отправляем данные обратно боту в виде JSON-строки
+            tg.sendData(JSON.stringify(reportData));
+        });
+    </script>
+</body>
+</html>
