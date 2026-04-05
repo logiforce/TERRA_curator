@@ -26,7 +26,8 @@
             margin-bottom: 10px;
             font-size: 14px;
         }
-        input[type="text"], textarea {
+        /* Хэштег оставили обычным инпутом (без расширения) */
+        input[type="text"] {
             width: 100%;
             box-sizing: border-box;
             padding: 10px;
@@ -38,25 +39,36 @@
             font-size: 14px;
             outline: none;
         }
+        /* Все остальные поля стали textarea с возможностью потянуть за уголок */
         textarea {
-            resize: vertical;
-            min-height: 60px;
+            width: 100%;
+            box-sizing: border-box;
+            padding: 10px;
+            margin-bottom: 8px;
+            border: 1px solid var(--tg-theme-hint-color, #cccccc);
+            border-radius: 8px;
+            background-color: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+            font-size: 14px;
+            outline: none;
+            resize: vertical; /* Разрешаем тянуть вниз */
+            min-height: 45px; /* Базовая высота */
+            font-family: inherit;
         }
         .row {
             display: flex;
-            align-items: flex-start; /* Выравниваем цифру по верхнему краю */
+            align-items: flex-start;
             margin-bottom: 8px;
         }
         .row span {
             width: 20px;
             font-weight: bold;
             color: var(--tg-theme-hint-color, #888);
-            margin-top: 10px; /* Отступ, чтобы цифра была на уровне первой строки текста */
+            margin-top: 12px; 
         }
         .row textarea {
             flex-grow: 1;
             margin-bottom: 0;
-            min-height: 40px; /* Базовая высота для строк списка, можно потянуть вниз */
         }
     </style>
 </head>
@@ -69,7 +81,7 @@
 
     <div class="block">
         <label>🎯 Цель на весь период обучения:</label>
-        <textarea id="global_goal" placeholder="Опишите цель..."></textarea>
+        <textarea id="global_goal" placeholder="Опишите цель..." style="min-height: 80px;"></textarea>
     </div>
 
     <div class="block">
@@ -108,72 +120,32 @@
 
     <div class="block">
         <label>❓ ЗАПРОС:</label>
-        <textarea id="request" placeholder="Если есть запрос к кураторам, напишите его здесь..."></textarea>
+        <textarea id="request" placeholder="Если есть запрос к кураторам, напишите его здесь..." style="min-height: 80px;"></textarea>
     </div>
 
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand(); 
 
-        const MAX_CHARS = 3900;
+        const MAX_BYTES = 3700; // Безопасный лимит байтов для Telegram
+        let isValid = true; // Флаг, разрешающий отправку
+
+        // Базовые цвета
         const GREEN_COLOR = '#2cab37';
-        const GRAY_COLOR = '#888888';
+        const GRAY_COLOR = '#e0e0e0';
+        const RED_TEXT = '#ff3b30';
+        const WHITE_TEXT = '#ffffff';
 
-        tg.MainButton.textColor = '#ffffff';
-        tg.MainButton.color = GREEN_COLOR; 
-        tg.MainButton.text = "ОТПРАВИТЬ ОТЧЕТ";
-        tg.MainButton.show();
-
-        // Подсчет символов
-        function calculateTotalChars() {
-            let total = 0;
-            document.querySelectorAll('input[type="text"], textarea').forEach(input => {
-                total += input.value.length;
-            });
-            return total;
-        }
-
-        // Логика визуального изменения кнопки
-        function checkLimits() {
-            let currentLength = calculateTotalChars();
-            
-            if (currentLength > MAX_CHARS) {
-                let excess = currentLength - MAX_CHARS;
-                // Меняем цвет и текст, но физически НЕ отключаем кнопку, чтобы избежать бага
-                tg.MainButton.color = GRAY_COLOR;
-                tg.MainButton.text = `Превышен лимит на ${excess} символов!`;
-            } else {
-                tg.MainButton.color = GREEN_COLOR;
-                tg.MainButton.text = "ОТПРАВИТЬ ОТЧЕТ";
-            }
-        }
-
-        // Проверка при каждом вводе
-        document.querySelectorAll('input[type="text"], textarea').forEach(input => {
-            input.addEventListener('input', checkLimits);
+        tg.MainButton.setParams({
+            text: "ОТПРАВИТЬ ОТЧЕТ",
+            color: GREEN_COLOR,
+            text_color: WHITE_TEXT,
+            is_visible: true
         });
 
-        // Сбор данных
-        function getValuesByClass(className) {
-            let inputs = document.querySelectorAll('.' + className);
-            let values = [];
-            inputs.forEach(input => {
-                if(input.value.trim() !== '') {
-                    values.push(input.value.trim());
-                }
-            });
-            return values;
-        }
-
-        // Отправка данных
-        tg.MainButton.onClick(function() {
-            // Если лимит превышен, создаем вибрацию (ошибку) и прерываем выполнение
-            if (calculateTotalChars() > MAX_CHARS) {
-                tg.HapticFeedback.notificationOccurred('error');
-                return; 
-            }
-
-            let reportData = {
+        // Сбор данных со страницы
+        function getReportData() {
+            let data = {
                 hashtag: document.getElementById('hashtag').value,
                 global_goal: document.getElementById('global_goal').value,
                 week_tasks: getValuesByClass('week_task'),
@@ -182,8 +154,62 @@
                 insights: getValuesByClass('insight'),
                 request: document.getElementById('request').value
             };
+            return data;
+        }
 
-            tg.sendData(JSON.stringify(reportData));
+        function getValuesByClass(className) {
+            let inputs = document.querySelectorAll('.' + className);
+            let values = [];
+            inputs.forEach(input => {
+                if(input.value.trim() !== '') values.push(input.value.trim());
+            });
+            return values;
+        }
+
+        // Проверка лимитов (теперь считаем реальный вес в байтах)
+        function checkLimits() {
+            let reportData = getReportData();
+            let jsonString = JSON.stringify(reportData);
+            
+            // TextEncoder переводит строку в реальные байты UTF-8
+            let byteSize = new TextEncoder().encode(jsonString).length;
+            
+            if (byteSize > MAX_BYTES) {
+                isValid = false;
+                // Примерно переводим лишние байты обратно в символы (делим на 2 для кириллицы)
+                let excessChars = Math.ceil((byteSize - MAX_BYTES) / 2);
+                
+                tg.MainButton.setParams({
+                    text: `Превышен лимит на ${excessChars} символов!`,
+                    color: GRAY_COLOR, // Серый фон
+                    text_color: RED_TEXT // КРАСНЫЙ текст
+                });
+            } else {
+                isValid = true;
+                tg.MainButton.setParams({
+                    text: "ОТПРАВИТЬ ОТЧЕТ",
+                    color: GREEN_COLOR,
+                    text_color: WHITE_TEXT
+                });
+            }
+        }
+
+        // Вешаем слушатель на любой ввод
+        document.querySelectorAll('input, textarea').forEach(input => {
+            input.addEventListener('input', checkLimits);
+        });
+
+        // Клик по главной кнопке
+        tg.MainButton.onClick(function() {
+            // Если флаг запрещает отправку (лимит превышен) — блокируем и вибрируем
+            if (!isValid) {
+                tg.HapticFeedback.notificationOccurred('error');
+                return;
+            }
+
+            // Отправляем сформированный JSON
+            let finalData = getReportData();
+            tg.sendData(JSON.stringify(finalData));
         });
     </script>
 </body>
