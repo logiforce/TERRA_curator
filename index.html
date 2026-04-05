@@ -12,6 +12,7 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             padding: 15px;
             margin: 0;
+            padding-bottom: 80px; /* Отступ снизу, чтобы кнопка и текст не сливались */
         }
         .block {
             margin-bottom: 20px;
@@ -53,6 +54,15 @@
         }
         .row input {
             margin-bottom: 0;
+        }
+        /* Стиль для красного предупреждения */
+        #char_warning {
+            color: #ff3b30;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 10px;
+            font-size: 14px;
+            display: none; /* Скрыто по умолчанию */
         }
     </style>
 </head>
@@ -107,18 +117,57 @@
         <textarea id="request" placeholder="Если есть запрос к кураторам, напишите его здесь..."></textarea>
     </div>
 
-    <script>
-        // Инициализация Telegram Web App
-        let tg = window.Telegram.WebApp;
-        tg.expand(); // Открываем на всю высоту экрана
+    <div id="char_warning"></div>
 
-        // Настраиваем главную кнопку снизу
+    <script>
+        let tg = window.Telegram.WebApp;
+        tg.expand(); 
+
+        const MAX_CHARS = 3900;
+        const warningDiv = document.getElementById('char_warning');
+        const GREEN_COLOR = '#2cab37';
+        const GRAY_COLOR = '#888888';
+
         tg.MainButton.textColor = '#ffffff';
-        tg.MainButton.color = '#2cab37'; // Зеленый цвет кнопки
+        tg.MainButton.color = GREEN_COLOR; 
         tg.MainButton.text = "ОТПРАВИТЬ ОТЧЕТ";
         tg.MainButton.show();
 
-        // Сбор данных из полей определенного класса
+        // Функция подсчета всех введенных символов
+        function calculateTotalChars() {
+            let total = 0;
+            document.querySelectorAll('input[type="text"], textarea').forEach(input => {
+                total += input.value.length;
+            });
+            return total;
+        }
+
+        // Проверка лимита при каждом вводе
+        function checkLimits() {
+            let currentLength = calculateTotalChars();
+            
+            if (currentLength > MAX_CHARS) {
+                let excess = currentLength - MAX_CHARS;
+                warningDiv.innerText = `Превышен лимит на ${excess} символов! Пожалуйста, сократите текст.`;
+                warningDiv.style.display = 'block';
+                
+                // Делаем кнопку серой и отключаем её
+                tg.MainButton.color = GRAY_COLOR;
+                tg.MainButton.disable();
+            } else {
+                warningDiv.style.display = 'none';
+                
+                // Возвращаем зеленой и включаем
+                tg.MainButton.color = GREEN_COLOR;
+                tg.MainButton.enable();
+            }
+        }
+
+        // Вешаем слушатель событий на все поля ввода
+        document.querySelectorAll('input[type="text"], textarea').forEach(input => {
+            input.addEventListener('input', checkLimits);
+        });
+
         function getValuesByClass(className) {
             let inputs = document.querySelectorAll('.' + className);
             let values = [];
@@ -130,8 +179,10 @@
             return values;
         }
 
-        // Событие по клику на главную кнопку
         tg.MainButton.onClick(function() {
+            // Двойная проверка на случай непредвиденных сбоев
+            if (calculateTotalChars() > MAX_CHARS) return;
+
             let reportData = {
                 hashtag: document.getElementById('hashtag').value,
                 global_goal: document.getElementById('global_goal').value,
@@ -142,7 +193,6 @@
                 request: document.getElementById('request').value
             };
 
-            // Отправляем данные обратно боту в виде JSON-строки
             tg.sendData(JSON.stringify(reportData));
         });
     </script>
