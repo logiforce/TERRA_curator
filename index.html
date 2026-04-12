@@ -26,7 +26,6 @@
             margin-bottom: 10px;
             font-size: 14px;
         }
-        /* Хэштег оставили обычным инпутом (без расширения) */
         input[type="text"] {
             width: 100%;
             box-sizing: border-box;
@@ -39,7 +38,6 @@
             font-size: 14px;
             outline: none;
         }
-        /* Все остальные поля стали textarea с возможностью потянуть за уголок */
         textarea {
             width: 100%;
             box-sizing: border-box;
@@ -51,8 +49,8 @@
             color: var(--tg-theme-text-color, #000000);
             font-size: 14px;
             outline: none;
-            resize: vertical; /* Разрешаем тянуть вниз */
-            min-height: 45px; /* Базовая высота */
+            resize: vertical; 
+            min-height: 45px; 
             font-family: inherit;
         }
         .row {
@@ -126,15 +124,14 @@
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand(); 
+        tg.ready();
 
-        // Строгий лимит с учетом шаблона бота в Telegram
         const MAX_BYTES = 3700; 
         let isValid = true; 
 
-        // Настройки цветов
         const GREEN_COLOR = '#2cab37';
-        const RED_COLOR = '#e63946'; // Красный фон для ошибки
-        const WHITE_TEXT = '#ffffff'; // Белый текст
+        const RED_COLOR = '#e63946'; 
+        const WHITE_TEXT = '#ffffff'; 
 
         tg.MainButton.setParams({
             text: "ОТПРАВИТЬ ОТЧЕТ",
@@ -142,6 +139,39 @@
             text_color: WHITE_TEXT,
             is_visible: true
         });
+
+        // --- ВОССТАНОВЛЕНИЕ ДАННЫХ ИЗ ОБЛАКА ---
+        if (tg.CloudStorage) {
+            tg.CloudStorage.getItem('last_report', function(err, value) {
+                if (!err && value) {
+                    try {
+                        const lastData = JSON.parse(value);
+                        
+                        if (lastData.hashtag) document.getElementById('hashtag').value = lastData.hashtag;
+                        if (lastData.global_goal) document.getElementById('global_goal').value = lastData.global_goal;
+                        if (lastData.request) document.getElementById('request').value = lastData.request;
+
+                        // Функция для расстановки массива по текстовым полям
+                        function setValuesByClass(className, valuesArray) {
+                            if (!valuesArray || !Array.isArray(valuesArray)) return;
+                            let inputs = document.querySelectorAll('.' + className);
+                            for (let i = 0; i < valuesArray.length && i < inputs.length; i++) {
+                                inputs[i].value = valuesArray[i];
+                            }
+                        }
+
+                        setValuesByClass('week_task', lastData.week_tasks);
+                        setValuesByClass('tomorrow_task', lastData.tomorrow_tasks);
+                        setValuesByClass('today_task', lastData.today_tasks);
+                        setValuesByClass('insight', lastData.insights);
+
+                        checkLimits(); // Перепроверяем лимиты после загрузки текста
+                    } catch (e) {
+                        console.error("Ошибка при восстановлении данных:", e);
+                    }
+                }
+            });
+        }
 
         function getReportData() {
             let data = {
@@ -174,7 +204,6 @@
                 isValid = false;
                 let excessChars = Math.ceil((byteSize - MAX_BYTES) / 2);
                 
-                // Применяем красную кнопку с белым текстом
                 tg.MainButton.setParams({
                     text: `Превышен лимит на ${excessChars} символов!`,
                     color: RED_COLOR,
@@ -182,7 +211,6 @@
                 });
             } else {
                 isValid = true;
-                // Возвращаем зеленую кнопку
                 tg.MainButton.setParams({
                     text: "ОТПРАВИТЬ ОТЧЕТ",
                     color: GREEN_COLOR,
@@ -195,6 +223,7 @@
             input.addEventListener('input', checkLimits);
         });
 
+        // --- СОХРАНЕНИЕ В ОБЛАКО И ОТПРАВКА ---
         tg.MainButton.onClick(function() {
             if (!isValid) {
                 tg.HapticFeedback.notificationOccurred('error');
@@ -202,7 +231,17 @@
             }
 
             let finalData = getReportData();
-            tg.sendData(JSON.stringify(finalData));
+            let jsonString = JSON.stringify(finalData);
+
+            // Если облако поддерживается - сохраняем, потом отправляем
+            if (tg.CloudStorage) {
+                tg.CloudStorage.setItem('last_report', jsonString, function(err, success) {
+                    tg.sendData(jsonString);
+                });
+            } else {
+                // Запасной вариант для старых клиентов
+                tg.sendData(jsonString);
+            }
         });
     </script>
 </body>
