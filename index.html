@@ -68,6 +68,26 @@
             flex-grow: 1;
             margin-bottom: 0;
         }
+        /* --- СТИЛИ ДЛЯ НОВОЙ КНОПКИ --- */
+        .html-submit-btn {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            margin-top: 20px;
+            background-color: #2cab37;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            text-align: center;
+            cursor: pointer;
+            box-sizing: border-box;
+            transition: background-color 0.3s;
+        }
+        .html-submit-btn:active {
+            opacity: 0.8;
+        }
     </style>
 </head>
 <body>
@@ -121,6 +141,8 @@
         <textarea id="request" placeholder="Если есть запрос к кураторам, напишите его здесь..." style="min-height: 80px;"></textarea>
     </div>
 
+    <button id="htmlSubmitBtn" class="html-submit-btn">ОТПРАВИТЬ ОТЧЕТ</button>
+
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand(); 
@@ -133,12 +155,16 @@
         const RED_COLOR = '#e63946'; 
         const WHITE_TEXT = '#ffffff'; 
 
+        // Инициализация системной кнопки (для тех, у кого она работает)
         tg.MainButton.setParams({
             text: "ОТПРАВИТЬ ОТЧЕТ",
             color: GREEN_COLOR,
             text_color: WHITE_TEXT,
             is_visible: true
         });
+
+        // Получаем нашу новую HTML-кнопку
+        const htmlSubmitBtn = document.getElementById('htmlSubmitBtn');
 
         // --- ВОССТАНОВЛЕНИЕ ДАННЫХ ИЗ ОБЛАКА ---
         if (tg.CloudStorage) {
@@ -151,7 +177,6 @@
                         if (lastData.global_goal) document.getElementById('global_goal').value = lastData.global_goal;
                         if (lastData.request) document.getElementById('request').value = lastData.request;
 
-                        // Функция для расстановки массива по текстовым полям
                         function setValuesByClass(className, valuesArray) {
                             if (!valuesArray || !Array.isArray(valuesArray)) return;
                             let inputs = document.querySelectorAll('.' + className);
@@ -203,19 +228,32 @@
             if (byteSize > MAX_BYTES) {
                 isValid = false;
                 let excessChars = Math.ceil((byteSize - MAX_BYTES) / 2);
+                let errorText = `Превышен лимит на ${excessChars} символов!`;
                 
+                // Меняем цвет системной кнопки
                 tg.MainButton.setParams({
-                    text: `Превышен лимит на ${excessChars} символов!`,
+                    text: errorText,
                     color: RED_COLOR,
                     text_color: WHITE_TEXT 
                 });
+                
+                // Меняем цвет и текст нашей новой HTML-кнопки
+                htmlSubmitBtn.innerText = errorText;
+                htmlSubmitBtn.style.backgroundColor = RED_COLOR;
+                
             } else {
                 isValid = true;
+                
+                // Возвращаем цвета системной кнопке
                 tg.MainButton.setParams({
                     text: "ОТПРАВИТЬ ОТЧЕТ",
                     color: GREEN_COLOR,
                     text_color: WHITE_TEXT
                 });
+                
+                // Возвращаем цвета нашей новой HTML-кнопке
+                htmlSubmitBtn.innerText = "ОТПРАВИТЬ ОТЧЕТ";
+                htmlSubmitBtn.style.backgroundColor = GREEN_COLOR;
             }
         }
 
@@ -223,8 +261,8 @@
             input.addEventListener('input', checkLimits);
         });
 
-        // --- СОХРАНЕНИЕ В ОБЛАКО И ОТПРАВКА ---
-        tg.MainButton.onClick(function() {
+        // --- ЕДИНАЯ ФУНКЦИЯ ОТПРАВКИ ---
+        function submitForm() {
             if (!isValid) {
                 tg.HapticFeedback.notificationOccurred('error');
                 return;
@@ -233,16 +271,18 @@
             let finalData = getReportData();
             let jsonString = JSON.stringify(finalData);
 
-            // Если облако поддерживается - сохраняем, потом отправляем
             if (tg.CloudStorage) {
                 tg.CloudStorage.setItem('last_report', jsonString, function(err, success) {
                     tg.sendData(jsonString);
                 });
             } else {
-                // Запасной вариант для старых клиентов
                 tg.sendData(jsonString);
             }
-        });
+        }
+
+        // Привязываем отправку к ОБЕИМ кнопкам
+        tg.MainButton.onClick(submitForm);
+        htmlSubmitBtn.addEventListener('click', submitForm);
     </script>
 </body>
 </html>
