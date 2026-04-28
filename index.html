@@ -153,17 +153,8 @@
 
         const GREEN_COLOR = '#2cab37';
         const RED_COLOR = '#e63946'; 
-        const WHITE_TEXT = '#ffffff'; 
 
-        // Инициализация системной кнопки (для тех, у кого она работает)
-        tg.MainButton.setParams({
-            text: "ОТПРАВИТЬ ОТЧЕТ",
-            color: GREEN_COLOR,
-            text_color: WHITE_TEXT,
-            is_visible: true
-        });
-
-        // Получаем нашу новую HTML-кнопку
+        // Получаем нашу HTML-кнопку
         const htmlSubmitBtn = document.getElementById('htmlSubmitBtn');
 
         // --- ВОССТАНОВЛЕНИЕ ДАННЫХ ИЗ ОБЛАКА ---
@@ -228,30 +219,15 @@
             if (byteSize > MAX_BYTES) {
                 isValid = false;
                 let excessChars = Math.ceil((byteSize - MAX_BYTES) / 2);
-                let errorText = `Превышен лимит на ${excessChars} символов!`;
                 
-                // Меняем цвет системной кнопки
-                tg.MainButton.setParams({
-                    text: errorText,
-                    color: RED_COLOR,
-                    text_color: WHITE_TEXT 
-                });
-                
-                // Меняем цвет и текст нашей новой HTML-кнопки
-                htmlSubmitBtn.innerText = errorText;
+                // Меняем цвет и текст только нашей HTML-кнопки
+                htmlSubmitBtn.innerText = `Превышен лимит на ${excessChars} символов!`;
                 htmlSubmitBtn.style.backgroundColor = RED_COLOR;
                 
             } else {
                 isValid = true;
                 
-                // Возвращаем цвета системной кнопке
-                tg.MainButton.setParams({
-                    text: "ОТПРАВИТЬ ОТЧЕТ",
-                    color: GREEN_COLOR,
-                    text_color: WHITE_TEXT
-                });
-                
-                // Возвращаем цвета нашей новой HTML-кнопке
+                // Возвращаем штатный вид нашей HTML-кнопке
                 htmlSubmitBtn.innerText = "ОТПРАВИТЬ ОТЧЕТ";
                 htmlSubmitBtn.style.backgroundColor = GREEN_COLOR;
             }
@@ -261,12 +237,16 @@
             input.addEventListener('input', checkLimits);
         });
 
-        // --- ЕДИНАЯ ФУНКЦИЯ ОТПРАВКИ ---
+        // --- ФУНКЦИЯ ОТПРАВКИ ---
         function submitForm() {
             if (!isValid) {
                 tg.HapticFeedback.notificationOccurred('error');
                 return;
             }
+
+            // Меняем текст кнопки, чтобы ученик понял, что процесс пошел
+            htmlSubmitBtn.innerText = "ОТПРАВКА...";
+            htmlSubmitBtn.style.opacity = "0.7";
 
             let finalData = getReportData();
             let jsonString = JSON.stringify(finalData);
@@ -280,8 +260,7 @@
             }
         }
 
-        // Привязываем отправку к ОБЕИМ кнопкам
-        tg.MainButton.onClick(submitForm);
+        // Привязываем отправку ТОЛЬКО к нашей HTML-кнопке
         htmlSubmitBtn.addEventListener('click', submitForm);
     </script>
 </body>
