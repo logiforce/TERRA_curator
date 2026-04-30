@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Отчет (Версия 2)</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            background-color: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            padding: 15px;
+            margin: 0;
+            padding-bottom: 110px; 
+        }
+        .block {
+            margin-bottom: 20px;
+            background-color: var(--tg-theme-secondary-bg-color, #f4f4f5);
+            padding: 15px;
+            border-radius: 12px;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        input[type="text"] {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 10px;
+            margin-bottom: 8px;
+            border: 1px solid var(--tg-theme-hint-color, #cccccc);
+            border-radius: 8px;
+            background-color: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+            font-size: 14px;
+            outline: none;
+        }
+        textarea {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 10px;
+            margin-bottom: 8px;
+            border: 1px solid var(--tg-theme-hint-color, #cccccc);
+            border-radius: 8px;
+            background-color: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+            font-size: 14px;
+            outline: none;
+            resize: vertical; 
+            min-height: 45px; 
+            font-family: inherit;
+        }
+        .row {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+        .row span {
+            width: 20px;
+            font-weight: bold;
+            color: var(--tg-theme-hint-color, #888);
+            margin-top: 12px; 
+        }
+        .row textarea {
+            flex-grow: 1;
+            margin-bottom: 0;
+        }
+        
+        /* --- СТИЛИ ДЛЯ ЗАКРЕПЛЕННОЙ КНОПКИ --- */
+        .button-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 15px;
+            background-color: var(--tg-theme-bg-color, #ffffff);
+            border-top: 1px solid var(--tg-theme-secondary-bg-color, #e5e5e5);
+            z-index: 9999;
+        }
+        .html-submit-btn {
+            display: block;
+            width: 100%;
+            padding: 14px; 
+            background-color: #2cab37;
+            color: #ffffff;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            text-align: center;
+            cursor: pointer;
+            box-sizing: border-box;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+            transition: background-color 0.3s;
+        }
+        .html-submit-btn:active {
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="block">
+        <label>Ваш хэштег:</label>
+        <input type="text" id="hashtag" value="#">
+    </div>
+
+    <!-- НОВЫЙ БЛОК: ИНФОПОВОДЫ -->
+    <div class="block">
+        <label>📱 Три инфоповода о которых можно рассказать в соц сетях (проанализируйте день и найдите три темы для поста или ролика):</label>
+        <div class="row"><span>1.</span><textarea class="news_topic" rows="1"></textarea></div>
+        <div class="row"><span>2.</span><textarea class="news_topic" rows="1"></textarea></div>
+        <div class="row"><span>3.</span><textarea class="news_topic" rows="1"></textarea></div>
+    </div>
+
+    <div class="block">
+        <label>🗓 КАКИЕ ЗАДАЧИ БЕРУ НА НЕДЕЛЮ:</label>
+        <div class="row"><span>1.</span><textarea class="week_task" rows="1"></textarea></div>
+        <div class="row"><span>2.</span><textarea class="week_task" rows="1"></textarea></div>
+        <div class="row"><span>3.</span><textarea class="week_task" rows="1"></textarea></div>
+    </div>
+
+    <div class="block">
+        <label>📋 ЧТО СДЕЛАЮ ЗАВТРА:</label>
+        <div class="row"><span>1.</span><textarea class="tomorrow_task" rows="1"></textarea></div>
+        <div class="row"><span>2.</span><textarea class="tomorrow_task" rows="1"></textarea></div>
+        <div class="row"><span>3.</span><textarea class="tomorrow_task" rows="1"></textarea></div>
+        <div class="row"><span>4.</span><textarea class="tomorrow_task" rows="1"></textarea></div>
+        <div class="row"><span>5.</span><textarea class="tomorrow_task" rows="1"></textarea></div>
+    </div>
+
+    <div class="block">
+        <label>✔️ ЧТО СДЕЛАНО СЕГОДНЯ:</label>
+        <div class="row"><span>1.</span><textarea class="today_task" rows="1"></textarea></div>
+        <div class="row"><span>2.</span><textarea class="today_task" rows="1"></textarea></div>
+        <div class="row"><span>3.</span><textarea class="today_task" rows="1"></textarea></div>
+        <div class="row"><span>4.</span><textarea class="today_task" rows="1"></textarea></div>
+        <div class="row"><span>5.</span><textarea class="today_task" rows="1"></textarea></div>
+    </div>
+
+    <div class="block">
+        <label>🌟 ИНСАЙТЫ ДНЯ:</label>
+        <div class="row"><span>1.</span><textarea class="insight" rows="1"></textarea></div>
+        <div class="row"><span>2.</span><textarea class="insight" rows="1"></textarea></div>
+        <div class="row"><span>3.</span><textarea class="insight" rows="1"></textarea></div>
+        <div class="row"><span>4.</span><textarea class="insight" rows="1"></textarea></div>
+        <div class="row"><span>5.</span><textarea class="insight" rows="1"></textarea></div>
+    </div>
+
+    <div class="block">
+        <label>❓ ЗАПРОС:</label>
+        <textarea id="request" placeholder="Если есть запрос к кураторам, напишите его здесь..." style="min-height: 80px;"></textarea>
+    </div>
+
+    <div class="button-container">
+        <button id="htmlSubmitBtn" class="html-submit-btn">ОТПРАВИТЬ ОТЧЕТ</button>
+    </div>
+
+    <script>
+        let tg = window.Telegram.WebApp;
+        tg.expand(); 
+        tg.ready();
+
+        const MAX_BYTES = 3700; 
+        let isValid = true; 
+
+        const GREEN_COLOR = '#2cab37';
+        const RED_COLOR = '#e63946'; 
+
+        const htmlSubmitBtn = document.getElementById('htmlSubmitBtn');
+
+        // --- ВОССТАНОВЛЕНИЕ ДАННЫХ ИЗ ОБЛАКА ---
+        if (tg.CloudStorage) {
+            tg.CloudStorage.getItem('last_report_v2', function(err, value) {
+                if (!err && value) {
+                    try {
+                        const lastData = JSON.parse(value);
+                        
+                        if (lastData.hashtag) document.getElementById('hashtag').value = lastData.hashtag;
+                        if (lastData.request) document.getElementById('request').value = lastData.request;
+
+                        function setValuesByClass(className, valuesArray) {
+                            if (!valuesArray || !Array.isArray(valuesArray)) return;
+                            let inputs = document.querySelectorAll('.' + className);
+                            for (let i = 0; i < valuesArray.length && i < inputs.length; i++) {
+                                inputs[i].value = valuesArray[i];
+                            }
+                        }
+
+                        // Загружаем инфоповоды вместо цели
+                        setValuesByClass('news_topic', lastData.news_topics);
+                        setValuesByClass('week_task', lastData.week_tasks);
+                        setValuesByClass('tomorrow_task', lastData.tomorrow_tasks);
+                        setValuesByClass('today_task', lastData.today_tasks);
+                        setValuesByClass('insight', lastData.insights);
+
+                        checkLimits(); 
+                    } catch (e) {
+                        console.error("Ошибка при восстановлении данных:", e);
+                    }
+                }
+            });
+        }
+
+        function getReportData() {
+            let data = {
+                hashtag: document.getElementById('hashtag').value,
+                // Собираем массив инфоповодов вместо одной строки цели
+                news_topics: getValuesByClass('news_topic'),
+                week_tasks: getValuesByClass('week_task'),
+                tomorrow_tasks: getValuesByClass('tomorrow_task'),
+                today_tasks: getValuesByClass('today_task'),
+                insights: getValuesByClass('insight'),
+                request: document.getElementById('request').value
+            };
+            return data;
+        }
+
+        function getValuesByClass(className) {
+            let inputs = document.querySelectorAll('.' + className);
+            let values = [];
+            inputs.forEach(input => {
+                if(input.value.trim() !== '') values.push(input.value.trim());
+            });
+            return values;
+        }
+
+        function checkLimits() {
+            let reportData = getReportData();
+            let jsonString = JSON.stringify(reportData);
+            let byteSize = new TextEncoder().encode(jsonString).length;
+            
+            if (byteSize > MAX_BYTES) {
+                isValid = false;
+                let excessChars = Math.ceil((byteSize - MAX_BYTES) / 2);
+                htmlSubmitBtn.innerText = `Превышен лимит на ${excessChars} символов!`;
+                htmlSubmitBtn.style.backgroundColor = RED_COLOR;
+            } else {
+                isValid = true;
+                htmlSubmitBtn.innerText = "ОТПРАВИТЬ ОТЧЕТ";
+                htmlSubmitBtn.style.backgroundColor = GREEN_COLOR;
+            }
+        }
+
+        document.querySelectorAll('input, textarea').forEach(input => {
+            input.addEventListener('input', checkLimits);
+        });
+
+        function submitForm() {
+            if (!isValid) {
+                tg.HapticFeedback.notificationOccurred('error');
+                return;
+            }
+
+            htmlSubmitBtn.innerText = "ОТПРАВКА...";
+            htmlSubmitBtn.style.opacity = "0.7";
+
+            let finalData = getReportData();
+            let jsonString = JSON.stringify(finalData);
+
+            if (tg.CloudStorage) {
+                // Сохраняем под новым ключом last_report_v2, чтобы не конфликтовать со старыми формами
+                tg.CloudStorage.setItem('last_report_v2', jsonString, function(err, success) {
+                    tg.sendData(jsonString);
+                });
+            } else {
+                tg.sendData(jsonString);
+            }
+        }
+
+        htmlSubmitBtn.addEventListener('click', submitForm);
+    </script>
+</body>
+</html>
